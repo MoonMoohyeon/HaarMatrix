@@ -44,6 +44,9 @@ int CompareDoubleAbsoulte(double x, double y)
 
 
 int main() {
+
+	printf("201910162 ¹®¹«Çö\n\n");
+
 	/*******************************************************************/
 	/*************************** Read image  ***************************/
 	/*******************************************************************/
@@ -192,6 +195,7 @@ int main() {
 	if (flag) printf("B == HtAH\n");
 	else printf("B != HtAH\n");
 
+	// (b)
 	A = multiplyTwoMatrices(multiplyTwoMatrices(H, n, n, HtAH, n, n), n, n, Ht, n, n);
 
 	llll = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hlt, n, n / 2, Hl, n / 2, n), n, n, A, n, n), n, n, Hlt, n, n / 2), n, n / 2, Hl, n / 2, n);
@@ -201,7 +205,6 @@ int main() {
 
 	HBHt = addTwoMatrices(addTwoMatrices(addTwoMatrices(llll, n, n, llhh, n, n), n, n, hhll, n, n), n, n, hhhh, n, n);
 
-	// (b)
 	flag = 1;
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
@@ -216,7 +219,6 @@ int main() {
 	else printf("A != HBHt\n");
 
 	// (d)
-	// llll
 	for (int i = 0; i < n / 4; i++) {
 		for (int j = 0; j < n; j++) {
 			Hll[i][j] = Ht[i][j];
@@ -256,39 +258,92 @@ int main() {
 	for (int i = 0; i < imgHeight; i++) {
 		for (int j = 0; j < imgWidth; j++) {
 			for (int k = 0; k < 3; k++) {
-				Are[residx] = Ahat[i][j] ;
+				Are[residx] = llllllll[i][j] ;
 				residx++;
 			}
 		}
 	}
 	
 
-	writeBitmapFile(bytesPerPixel, outputHeader, Are, imgSize, "lena32.bmp");
-
+	writeBitmapFile(bytesPerPixel, outputHeader, Are, imgSize, "llllllll.bmp");
 
 
 	// free
 	free(image);
 	free(output);
-	for (int i = 0; i < imgHeight; i++)
+	for (int i = 0; i < n; i++) {
 		free(A[i]);
-	free(A);
-	for (int i = 0; i < imgHeight; i++)
 		free(H[i]);
-	free(H);
-	for (int i = 0; i < imgHeight; i++)
 		free(Ht[i]);
-	free(Ht);
-	for (int i = 0; i < imgHeight; i++)
 		free(B[i]);
-	free(B);
-	for (int i = 0; i < imgHeight; i++)
 		free(Bhat[i]);
-	free(Bhat);
-	for (int i = 0; i < imgHeight; i++)
 		free(Ahat[i]);
+	}
+	free(A);
+	free(H);
+	free(Ht);
+	free(B);
+	free(Bhat);
 	free(Ahat);
 	free(Are);
+
+	for (int i = 0; i < n / 2; i++) {
+		free(Hl[i]);
+		free(Hh[i]);
+		free(Hlt[i]);
+		free(Hht[i]);
+		free(ll[i]);
+		free(lh[i]);
+		free(hl[i]);
+		free(hh[i]);
+	}
+	free(Hl);
+	free(Hh);
+	free(Hlt);
+	free(Hht);
+	free(ll);
+	free(lh);
+	free(hl);
+	free(hh);
+
+	for (int i = 0; i < n; i++) {
+		free(HtAH[i]);
+		free(HBHt[i]);
+		free(llll[i]);
+		free(llhh[i]);
+		free(hhll[i]);
+		free(hhhh[i]);
+	}
+	free(HtAH);
+	free(HBHt);
+	free(llll);
+	free(llhh);
+	free(hhll);
+	free(hhhh);
+
+	for (int i = 0; i < n / 4; i++) {
+		free(Hll[i]);
+		free(Hllt[i]);
+		free(Hlh[i]);
+		free(Hlht[i]);
+	}
+	free(Hll);
+	free(Hllt);
+	free(Hlh);
+	free(Hlht);
+
+	for (int i = 0; i < n; i++) {
+		free(HltHlAHltHl[i]);
+		free(llllllll[i]);
+		free(lllllhlh[i]);
+		free(lhlhllll[i]);
+		free(lhlhlhlh[i]);
+	}
+	free(HltHlAHltHl);
+	free(llllllll);
+	free(lllllhlh);
+	free(lhlhllll);
+	free(lhlhlhlh);
 
 	return 0;
 }
