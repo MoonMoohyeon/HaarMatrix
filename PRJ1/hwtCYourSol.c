@@ -106,7 +106,7 @@ int main() {
 		for (int j = 0; j < n; j++)
 			Bhat[i][j] = 0.0;
 
-	int m = 512; //이미지가 정사각형(Height==Width)이라고 가정; m = 2^t,t=0,1,2,...
+	int m = 32; //이미지가 정사각형(Height==Width)이라고 가정; m = 2^t,t=0,1,2,...
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < m; j++) {
 			Bhat[i][j] = B[i][j];
@@ -123,6 +123,12 @@ int main() {
 
 	double** Hl = allocateMemory(n / 2, n);
 	double** Hh = allocateMemory(n / 2, n);
+	for (int i = 0; i < n / 2; i++) {
+		for (int j = 0; j < n; j++) {
+			Hl[i][j] = Ht[i][j];
+			Hh[i][j] = Ht[i + n / 2][j];
+		}
+	}
 
 	double** Hlt = transposeMatrix(Hl, n / 2, n);
 	double** Hht = transposeMatrix(Hh, n / 2, n);
@@ -151,13 +157,6 @@ int main() {
 	double** lllllhlh = allocateMemory(n, n);
 	double** lhlhllll = allocateMemory(n, n);
 	double** lhlhlhlh = allocateMemory(n, n);
-
-	for (int i = 0; i < n / 2; i++) {
-		for (int j = 0; j < n; j++) {
-			Hl[i][j] = Ht[i][j];
-			Hh[i][j] = Ht[i + n / 2][j];
-		}
-	}
 
 	for (int i = 0; i < n / 2; i++) {
 		for (int j = 0; j < n / 2; j++) {
@@ -217,6 +216,7 @@ int main() {
 	else printf("A != HBHt\n");
 
 	// (d)
+	// llll
 	for (int i = 0; i < n / 4; i++) {
 		for (int j = 0; j < n; j++) {
 			Hll[i][j] = Ht[i][j];
@@ -256,93 +256,39 @@ int main() {
 	for (int i = 0; i < imgHeight; i++) {
 		for (int j = 0; j < imgWidth; j++) {
 			for (int k = 0; k < 3; k++) {
-				Are[residx] = lhlhlhlh[i][j] ;
+				Are[residx] = Ahat[i][j] ;
 				residx++;
 			}
 		}
 	}
 	
 
-	writeBitmapFile(bytesPerPixel, outputHeader, Are, imgSize, "lhlhlhlh.bmp");
+	writeBitmapFile(bytesPerPixel, outputHeader, Are, imgSize, "lena32.bmp");
 
 
 
 	// free
 	free(image);
 	free(output);
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < imgHeight; i++)
 		free(A[i]);
-		free(H[i]);
-		free(Ht[i]);
-		free(B[i]);
-		free(Bhat[i]);
-		free(Ahat[i]);
-	}
 	free(A);
+	for (int i = 0; i < imgHeight; i++)
+		free(H[i]);
 	free(H);
+	for (int i = 0; i < imgHeight; i++)
+		free(Ht[i]);
 	free(Ht);
+	for (int i = 0; i < imgHeight; i++)
+		free(B[i]);
 	free(B);
+	for (int i = 0; i < imgHeight; i++)
+		free(Bhat[i]);
 	free(Bhat);
+	for (int i = 0; i < imgHeight; i++)
+		free(Ahat[i]);
 	free(Ahat);
 	free(Are);
-
-	for (int i = 0; i < n / 2; i++) {
-		free(Hl[i]);
-		free(Hh[i]); 
-		free(Hlt[i]); 
-		free(Hht[i]); 
-		free(ll[i]); 
-		free(lh[i]); 
-		free(hl[i]); 
-		free(hh[i]);
-	}		
-	free(Hl);
-	free(Hh);
-	free(Hlt);
-	free(Hht);
-	free(ll);
-	free(lh);	
-	free(hl);
-	free(hh);
-
-	for (int i = 0; i < n; i++) {
-		free(HtAH[i]); 
-		free(HBHt[i]); 
-		free(llll[i]); 
-		free(llhh[i]);
-		free(hhll[i]); 
-		free(hhhh[i]);
-	}
-	free(HtAH);
-	free(HBHt);	
-	free(llll);	
-	free(llhh);	
-	free(hhll);	
-	free(hhhh);
-
-	for (int i = 0; i < n / 4; i++) {
-		free(Hll[i]); 
-		free(Hllt[i]); 
-		free(Hlh[i]); 
-		free(Hlht[i]);
-	}	
-	free(Hll);
-	free(Hllt);
-	free(Hlh);	
-	free(Hlht);
-
-	for (int i = 0; i < n; i++) {
-		free(HltHlAHltHl[i]);
-		free(llllllll[i]);
-		free(lllllhlh[i]);
-		free(lhlhllll[i]);
-		free(lhlhlhlh[i]);
-	}
-	free(HltHlAHltHl);
-	free(llllllll);
-	free(lllllhlh);
-	free(lhlhllll);
-	free(lhlhlhlh);
 
 	return 0;
 }
