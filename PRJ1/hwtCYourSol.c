@@ -30,6 +30,18 @@ void releaseMemory(double** A, int m);
 double** multiplyTwoMatrices(double** A, int m, int n, double** B, int l, int k);
 double** transposeMatrix(double** A, int m, int n);
 double** NormailzeMatrix(double** A, int m, int n);
+double** addTwoMatrices(double** A, int m, int n, double** B, int l, int k);
+
+int CompareDoubleAbsoulte(double x, double y)
+{
+	double absTolerance = (1.0e-8);
+	double diff = x - y;
+	if (fabs(diff) <= absTolerance)
+		return 1;
+	else return 0;
+}
+
+
 
 int main() {
 	/*******************************************************************/
@@ -58,58 +70,43 @@ int main() {
 	double** A; //original image matrix
 	double** H; // Haar matrix
 	double** Ht;
-	A = (double**)malloc(sizeof(double*) * imgHeight); // byte
-	for (int i = 0; i < imgHeight; i++) {
-		A[i] = (double*)malloc(sizeof(double) * imgWidth);
+	double** B;
+	double** Bhat;
+	double** Ahat;
+	int n = imgHeight; //이미지가 정사각형(Height==Width)이라고 가정; n = 2^t,t=0,1,2,...
+	A = (double**)malloc(sizeof(double*) * n); // byte
+	for (int i = 0; i < n; i++) {
+		A[i] = (double*)malloc(sizeof(double) * n);
 	}
 
-	for (int i = 0; i < imgHeight; i++)
-		for (int j = 0; j < imgWidth; j++)
-			A[i][j] = image[(i * imgWidth + j) * bytesPerPixel];
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			A[i][j] = image[(i * n + j) * bytesPerPixel];
 
 
 
 	//Haar matrix H 구성 (orthonormal column을 갖도록 구성)
-	int n = imgHeight; //이미지가 정사각형(Height==Width)이라고 가정; n = 2^t,t=0,1,2,...
 	H = (double**)malloc(sizeof(double*) * n);
 	H = constructHaarMatrixRecursive(n);
-	/*for (int i = 0; i < n; i++) {
-		for (int j = 0; j < n; j++) {
-			printf("%lf ", H[i][j]);
-		}
-		printf("\n");
-	}*/
 	H = NormailzeMatrix(H, n, n);
-	/*for (int i = 0; i < n; i++) {
-		for (int j = 0; j < n; j++) {
-			printf("%lf ", H[i][j]);
-		}
-		printf("\n");
-	}*/
 
 	//HWT 수행: 행렬곱 B = H'*A*H
 	Ht = transposeMatrix(H, n, n);
-	double** B = multiplyTwoMatrices(multiplyTwoMatrices(Ht, n, n, A, n, n),n, n, H, n, n);
-	/*for (int i = 0; i < n; i++) {
-		for (int j = 0; j < n; j++) {
-			printf("%lf ", B[i][j]);
-		}
-		printf("\n");
-	}*/
+	B = multiplyTwoMatrices(multiplyTwoMatrices(Ht, n, n, A, n, n),n, n, H, n, n);
 	
 
 	//행렬 B 자르기: B의 upper left corner(subsquare matrix)를 잘라 Bhat에 저장
 	//Bhat은 B와 사이즈가 같으며 B에서 잘라서 저장한 부분 외에는 모두 0으로 채워짐
-	double** Bhat = (double**)malloc(sizeof(double*) * imgHeight); // byte
-	for (int i = 0; i < imgHeight; i++) {
-		Bhat[i] = (double*)malloc(sizeof(double) * imgWidth);
+	Bhat = (double**)malloc(sizeof(double*) * n); // byte
+	for (int i = 0; i < n; i++) {
+		Bhat[i] = (double*)malloc(sizeof(double) * n);
 	}
 
-	for (int i = 0; i < imgHeight; i++)
-		for (int j = 0; j < imgWidth; j++)
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
 			Bhat[i][j] = 0.0;
 
-	int m = 64; //이미지가 정사각형(Height==Width)이라고 가정; m = 2^t,t=0,1,2,...
+	int m = 512; //이미지가 정사각형(Height==Width)이라고 가정; m = 2^t,t=0,1,2,...
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < m; j++) {
 			Bhat[i][j] = B[i][j];
@@ -118,9 +115,138 @@ int main() {
 	
 
 	//IHWT 수행: Ahat = H*Bhat*H'
-	double** Ahat = multiplyTwoMatrices(multiplyTwoMatrices(H, n, n, Bhat, n, n), n, n, Ht, n, n);
+	Ahat = multiplyTwoMatrices(multiplyTwoMatrices(H, n, n, Bhat, n, n), n, n, Ht, n, n);
 
 
+
+	// 3.
+
+	double** Hl = allocateMemory(n / 2, n);
+	double** Hh = allocateMemory(n / 2, n);
+
+	double** Hlt = transposeMatrix(Hl, n / 2, n);
+	double** Hht = transposeMatrix(Hh, n / 2, n);
+
+	double** ll = multiplyTwoMatrices(multiplyTwoMatrices(Hl, n / 2, n, A, n, n), n / 2, n, Hlt, n, n / 2);
+	double** lh = multiplyTwoMatrices(multiplyTwoMatrices(Hl, n / 2, n, A, n, n), n / 2, n, Hht, n, n / 2);
+	double** hl = multiplyTwoMatrices(multiplyTwoMatrices(Hh, n / 2, n, A, n, n), n / 2, n, Hlt, n, n / 2);
+	double** hh = multiplyTwoMatrices(multiplyTwoMatrices(Hh, n / 2, n, A, n, n), n / 2, n, Hht, n, n / 2);
+
+	double** HtAH = allocateMemory(n, n);
+	double** HBHt = allocateMemory(n, n);
+
+	double** llll = allocateMemory(n, n);
+	double** llhh = allocateMemory(n, n);
+	double** hhll = allocateMemory(n, n);
+	double** hhhh = allocateMemory(n, n);
+
+	double** Hll = allocateMemory(n / 4, n);
+	double** Hlh = allocateMemory(n / 4, n);
+	double** Hllt = allocateMemory(n / 4, n);
+	double** Hlht = allocateMemory(n / 4, n);
+
+	double** HltHlAHltHl = allocateMemory(n, n);
+
+	double** llllllll = allocateMemory(n, n);
+	double** lllllhlh = allocateMemory(n, n);
+	double** lhlhllll = allocateMemory(n, n);
+	double** lhlhlhlh = allocateMemory(n, n);
+
+	for (int i = 0; i < n / 2; i++) {
+		for (int j = 0; j < n; j++) {
+			Hl[i][j] = Ht[i][j];
+			Hh[i][j] = Ht[i + n / 2][j];
+		}
+	}
+
+	for (int i = 0; i < n / 2; i++) {
+		for (int j = 0; j < n / 2; j++) {
+				HtAH[i][j] = ll[i][j];
+		}
+	}
+	for (int i = 0; i < n / 2; i++) {
+		for (int j = n/2; j < n; j++) {
+			HtAH[i][j] = lh[i][j - n / 2];
+		}
+	}
+	for (int i = n/2; i < n; i++) {
+		for (int j = 0; j < n / 2; j++) {
+			HtAH[i][j] = hl[i - n / 2][j];
+		}
+	}
+	for (int i = n / 2; i < n; i++) {
+		for (int j = n / 2; j < n; j++) {
+			HtAH[i][j] = hh[i - n / 2][j - n / 2];
+		}
+	}
+
+	// (a)
+	char flag = 1;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			if (B[i][j] != HtAH[i][j]) {
+				flag = 0;
+				break;
+			}
+		}
+	}
+	if (flag) printf("B == HtAH\n");
+	else printf("B != HtAH\n");
+
+	A = multiplyTwoMatrices(multiplyTwoMatrices(H, n, n, HtAH, n, n), n, n, Ht, n, n);
+
+	llll = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hlt, n, n / 2, Hl, n / 2, n), n, n, A, n, n), n, n, Hlt, n, n / 2), n, n / 2, Hl, n / 2, n);
+	llhh = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hlt, n, n / 2, Hl, n / 2, n), n, n, A, n, n), n, n, Hht, n, n / 2), n, n / 2, Hh, n / 2, n);
+	hhll = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hht, n, n / 2, Hh, n / 2, n), n, n, A, n, n), n, n, Hlt, n, n / 2), n, n / 2, Hl, n / 2, n);
+	hhhh = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hht, n, n / 2, Hh, n / 2, n), n, n, A, n, n), n, n, Hht, n, n / 2), n, n / 2, Hh, n / 2, n);
+
+	HBHt = addTwoMatrices(addTwoMatrices(addTwoMatrices(llll, n, n, llhh, n, n), n, n, hhll, n, n), n, n, hhhh, n, n);
+
+	// (b)
+	flag = 1;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			if (!CompareDoubleAbsoulte(A[i][j], HBHt[i][j])) {
+				flag = 0;
+				printf("%lf != %lf\n", A[i][j], HBHt[i][j]);
+				break;
+			}
+		}
+	}
+	if (flag) printf("A == HBHt\n");
+	else printf("A != HBHt\n");
+
+	// (d)
+	for (int i = 0; i < n / 4; i++) {
+		for (int j = 0; j < n; j++) {
+			Hll[i][j] = Ht[i][j];
+			Hlh[i][j] = Ht[i + n / 4][j];
+		}
+	}
+
+	Hllt = transposeMatrix(Hll, n / 4, n);
+	Hlht = transposeMatrix(Hlh, n / 4, n);
+
+	llllllll = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hllt, n, n / 4, Hll, n / 4, n), n, n, A, n, n), n, n, Hllt, n, n / 4), n, n / 4, Hll, n / 4, n);
+	lllllhlh = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hllt, n, n / 4, Hll, n / 4, n), n, n, A, n, n), n, n, Hlht, n, n / 4), n, n / 4, Hlh, n / 4, n);
+	lhlhllll = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hlht, n, n / 4, Hlh, n / 4, n), n, n, A, n, n), n, n, Hllt, n, n / 4), n, n / 4, Hll, n / 4, n);
+	lhlhlhlh = multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(multiplyTwoMatrices(Hlht, n, n / 4, Hlh, n / 4, n), n, n, A, n, n), n, n, Hlht, n, n / 4), n, n / 4, Hlh, n / 4, n);
+
+	HltHlAHltHl = addTwoMatrices(addTwoMatrices(addTwoMatrices(llllllll, n, n, lllllhlh, n, n), n, n, lhlhllll, n, n), n, n, lhlhlhlh, n, n);
+	flag = 1;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			if (!CompareDoubleAbsoulte(llll[i][j], HltHlAHltHl[i][j])) {
+				flag = 0;
+				printf("%lf != %lf\n", llll[i][j], HltHlAHltHl[i][j]);
+				break;
+			}
+		}
+	}
+	if (flag) printf("llll == HltHlAHltHl\n");
+	else printf("llll != HltHlAHltHl\n");
+
+	
 	/*******************************************************************/
 	/******************* Write reconstructed image  ********************/
 	/*******************************************************************/
@@ -130,23 +256,93 @@ int main() {
 	for (int i = 0; i < imgHeight; i++) {
 		for (int j = 0; j < imgWidth; j++) {
 			for (int k = 0; k < 3; k++) {
-				Are[residx] = Ahat[i][j];
+				Are[residx] = lhlhlhlh[i][j] ;
 				residx++;
 			}
 		}
 	}
-		
 	
 
-	writeBitmapFile(bytesPerPixel, outputHeader, Are, imgSize, "output1.bmp");
+	writeBitmapFile(bytesPerPixel, outputHeader, Are, imgSize, "lhlhlhlh.bmp");
 
 
+
+	// free
 	free(image);
 	free(output);
-	for (int i = 0; i < imgHeight; i++)
+	for (int i = 0; i < n; i++) {
 		free(A[i]);
+		free(H[i]);
+		free(Ht[i]);
+		free(B[i]);
+		free(Bhat[i]);
+		free(Ahat[i]);
+	}
 	free(A);
+	free(H);
+	free(Ht);
+	free(B);
+	free(Bhat);
+	free(Ahat);
 	free(Are);
+
+	for (int i = 0; i < n / 2; i++) {
+		free(Hl[i]);
+		free(Hh[i]); 
+		free(Hlt[i]); 
+		free(Hht[i]); 
+		free(ll[i]); 
+		free(lh[i]); 
+		free(hl[i]); 
+		free(hh[i]);
+	}		
+	free(Hl);
+	free(Hh);
+	free(Hlt);
+	free(Hht);
+	free(ll);
+	free(lh);	
+	free(hl);
+	free(hh);
+
+	for (int i = 0; i < n; i++) {
+		free(HtAH[i]); 
+		free(HBHt[i]); 
+		free(llll[i]); 
+		free(llhh[i]);
+		free(hhll[i]); 
+		free(hhhh[i]);
+	}
+	free(HtAH);
+	free(HBHt);	
+	free(llll);	
+	free(llhh);	
+	free(hhll);	
+	free(hhhh);
+
+	for (int i = 0; i < n / 4; i++) {
+		free(Hll[i]); 
+		free(Hllt[i]); 
+		free(Hlh[i]); 
+		free(Hlht[i]);
+	}	
+	free(Hll);
+	free(Hllt);
+	free(Hlh);	
+	free(Hlht);
+
+	for (int i = 0; i < n; i++) {
+		free(HltHlAHltHl[i]);
+		free(llllllll[i]);
+		free(lllllhlh[i]);
+		free(lhlhllll[i]);
+		free(lhlhlhlh[i]);
+	}
+	free(HltHlAHltHl);
+	free(llllllll);
+	free(lllllhlh);
+	free(lhlhllll);
+	free(lhlhlhlh);
 
 	return 0;
 }
@@ -335,4 +531,21 @@ double** NormailzeMatrix(double** A, int m, int n)
 	}
 
 	return B;
+}
+
+double** addTwoMatrices(double** A, int m, int n, double** B, int l, int k) {
+	if (m != l || n != k) {
+		printf("NULL");
+		return NULL;
+	}
+
+	double** result = allocateMemory(m, n);
+
+	for (int i = 0; i < m; i++) {
+		for (int j = 0; j < n; j++) {
+			result[i][j] = A[i][j] + B[i][j];
+		}
+	}
+
+	return result;
 }
