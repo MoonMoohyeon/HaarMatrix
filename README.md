@@ -18,6 +18,6 @@ Haar Wavelet 변환을 이용해 비트맵 이미지를 압축 및 복원합니�
 ## 🚀실행
 소스 코드를 Windows Visual Studio 환경에서 실행합니다.
 
-![이미지](lena_24bit.png)
+![이미지](image_lena_24bit.png)
 
 ![이미지](lena32.png)
